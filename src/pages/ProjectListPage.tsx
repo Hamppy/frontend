@@ -8,7 +8,11 @@ import {
   CardActions,
   Fab,
   Button,
+  ToggleButton,
+  ToggleButtonGroup,
   Box,
+  TextField,
+  InputAdornment,
 } from "@mui/material";
 import {
   useProjectState,
@@ -20,7 +24,14 @@ import {
   useHelpDispatch,
   setHelpSteps,
 } from "../contexts";
-import { Delete, Add, Edit } from "@mui/icons-material";
+import {
+  Delete,
+  Add,
+  Edit,
+  ViewHeadline,
+  GridView,
+  Search,
+} from "@mui/icons-material";
 import {
   routes,
   LOCATOR_PROJECT_LIST_PAGE_PROJECT_LIST,
@@ -30,6 +41,7 @@ import { formatDateTime } from "../_helpers/format.helper";
 import { ProjectForm } from "../components/ProjectForm";
 import { useSnackbar } from "notistack";
 import { BaseModal } from "../components/BaseModal";
+import Grid2 from "@mui/material/Unstable_Grid2";
 
 const ProjectsListPage = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -40,6 +52,14 @@ const ProjectsListPage = () => {
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
   const [updateDialogOpen, setUpdateDialogOpen] = React.useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [alignment, setAlignment] = React.useState<string | null>("left");
+
+  const handleAlignment = (
+    event: React.MouseEvent<HTMLElement>,
+    newAlignment: string | null,
+  ) => {
+    setAlignment(newAlignment);
+  };
 
   useEffect(() => {
     setHelpSteps(helpDispatch, PROJECT_LIST_PAGE_STEPS);
@@ -58,141 +78,182 @@ const ProjectsListPage = () => {
   };
 
   return (
-    <Box mt={2}>
-      <Grid container spacing={2}>
-        <Grid item xs={4}>
-          <Box
-            height="100%"
-            alignItems="center"
-            justifyContent="center"
-            display="flex"
+    <>
+      <Grid2 container spacing={2} justifyContent="center" alignItems="center">
+        <Grid2 xs={3}>
+          <ToggleButtonGroup
+            value={alignment}
+            exclusive
+            onChange={handleAlignment}
+            aria-label="text alignment"
           >
-            <Fab
-              color="primary"
-              aria-label="add"
-              onClick={() => {
-                toggleCreateDialogOpen();
-                setProjectEditState(projectDispatch);
-              }}
+            <ToggleButton value="left" aria-label="left aligned">
+              <GridView />
+            </ToggleButton>
+            <ToggleButton value="center" aria-label="centered">
+              <ViewHeadline />
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Grid2>
+        <Grid2 xs={6}>
+          <TextField
+            fullWidth
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton>
+                    <Search />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            id="standard-basic"
+            label="Standard"
+            variant="standard"
+          />
+        </Grid2>
+        <Grid2 xs={3}>
+          <Button variant="contained" startIcon={<Add />}>
+            New Project
+          </Button>
+        </Grid2>
+      </Grid2>
+      <Box mt={2}>
+        <Grid container spacing={2}>
+          <Grid item xs={4}>
+            <Box
+              height="100%"
+              alignItems="center"
+              justifyContent="center"
+              display="flex"
             >
-              <Add />
-            </Fab>
-          </Box>
-
-          <BaseModal
-            open={createDialogOpen}
-            title={"Create Project"}
-            submitButtonText={"Create"}
-            onCancel={toggleCreateDialogOpen}
-            content={<ProjectForm />}
-            onSubmit={() =>
-              createProject(projectDispatch, projectState.projectEditState)
-                .then((project) => {
+              <Fab
+                color="primary"
+                aria-label="add"
+                onClick={() => {
                   toggleCreateDialogOpen();
-                  enqueueSnackbar(`${project.name} created`, {
-                    variant: "success",
-                  });
-                })
-                .catch((err) =>
-                  enqueueSnackbar(err, {
-                    variant: "error",
-                  }),
-                )
-            }
-          />
+                  setProjectEditState(projectDispatch);
+                }}
+              >
+                <Add />
+              </Fab>
+            </Box>
 
-          <BaseModal
-            open={updateDialogOpen}
-            title={"Update Project"}
-            submitButtonText={"Update"}
-            onCancel={toggleUpdateDialogOpen}
-            content={<ProjectForm />}
-            onSubmit={() =>
-              updateProject(projectDispatch, projectState.projectEditState)
-                .then((project) => {
-                  toggleUpdateDialogOpen();
-                  enqueueSnackbar(`${project.name} updated`, {
-                    variant: "success",
-                  });
-                })
-                .catch((err) =>
-                  enqueueSnackbar(err, {
-                    variant: "error",
-                  }),
-                )
-            }
-          />
+            <BaseModal
+              open={createDialogOpen}
+              title={"Create Project"}
+              submitButtonText={"Create"}
+              onCancel={toggleCreateDialogOpen}
+              content={<ProjectForm />}
+              onSubmit={() =>
+                createProject(projectDispatch, projectState.projectEditState)
+                  .then((project) => {
+                    toggleCreateDialogOpen();
+                    enqueueSnackbar(`${project.name} created`, {
+                      variant: "success",
+                    });
+                  })
+                  .catch((err) =>
+                    enqueueSnackbar(err, {
+                      variant: "error",
+                    }),
+                  )
+              }
+            />
 
-          <BaseModal
-            open={deleteDialogOpen}
-            title={"Delete Project"}
-            submitButtonText={"Delete"}
-            onCancel={toggleDeleteDialogOpen}
-            content={
-              <Typography>{`Are you sure you want to delete: ${projectState.projectEditState.name}?`}</Typography>
-            }
-            onSubmit={() =>
-              deleteProject(projectDispatch, projectState.projectEditState.id)
-                .then((project) => {
-                  toggleDeleteDialogOpen();
-                  enqueueSnackbar(`${project.name} deleted`, {
-                    variant: "success",
-                  });
-                })
-                .catch((err) =>
-                  enqueueSnackbar(err, {
-                    variant: "error",
-                  }),
-                )
-            }
-          />
-        </Grid>
-        {projectState.projectList.map((project) => (
-          <Grid item xs={4} key={project.id}>
-            <Card id={LOCATOR_PROJECT_LIST_PAGE_PROJECT_LIST}>
-              <CardContent>
-                <Typography>Id: {project.id}</Typography>
-                <Typography>Name: {project.name}</Typography>
-                <Typography>Main branch: {project.mainBranchName}</Typography>
-                <Typography>
-                  Created: {formatDateTime(project.createdAt)}
-                </Typography>
-              </CardContent>
-              <CardActions>
-                <Button color="primary" href={project.id}>
-                  Builds
-                </Button>
-                <Button
-                  color="primary"
-                  href={`${routes.VARIATION_LIST_PAGE}/${project.id}`}
-                >
-                  Variations
-                </Button>
-                <IconButton
-                  onClick={() => {
+            <BaseModal
+              open={updateDialogOpen}
+              title={"Update Project"}
+              submitButtonText={"Update"}
+              onCancel={toggleUpdateDialogOpen}
+              content={<ProjectForm />}
+              onSubmit={() =>
+                updateProject(projectDispatch, projectState.projectEditState)
+                  .then((project) => {
                     toggleUpdateDialogOpen();
-                    setProjectEditState(projectDispatch, project);
-                  }}
-                  size="large"
-                >
-                  <Edit />
-                </IconButton>
-                <IconButton
-                  onClick={() => {
+                    enqueueSnackbar(`${project.name} updated`, {
+                      variant: "success",
+                    });
+                  })
+                  .catch((err) =>
+                    enqueueSnackbar(err, {
+                      variant: "error",
+                    }),
+                  )
+              }
+            />
+
+            <BaseModal
+              open={deleteDialogOpen}
+              title={"Delete Project"}
+              submitButtonText={"Delete"}
+              onCancel={toggleDeleteDialogOpen}
+              content={
+                <Typography>{`Are you sure you want to delete: ${projectState.projectEditState.name}?`}</Typography>
+              }
+              onSubmit={() =>
+                deleteProject(projectDispatch, projectState.projectEditState.id)
+                  .then((project) => {
                     toggleDeleteDialogOpen();
-                    setProjectEditState(projectDispatch, project);
-                  }}
-                  size="large"
-                  data-testid="delete"
-                >
-                  <Delete />
-                </IconButton>
-              </CardActions>
-            </Card>
+                    enqueueSnackbar(`${project.name} deleted`, {
+                      variant: "success",
+                    });
+                  })
+                  .catch((err) =>
+                    enqueueSnackbar(err, {
+                      variant: "error",
+                    }),
+                  )
+              }
+            />
           </Grid>
-        ))}
-      </Grid>
-    </Box>
+          {projectState.projectList.map((project) => (
+            <Grid item xs={4} key={project.id}>
+              <Card id={LOCATOR_PROJECT_LIST_PAGE_PROJECT_LIST}>
+                <CardContent>
+                  <Typography>Id: {project.id}</Typography>
+                  <Typography>Name: {project.name}</Typography>
+                  <Typography>Main branch: {project.mainBranchName}</Typography>
+                  <Typography>
+                    Created: {formatDateTime(project.createdAt)}
+                  </Typography>
+                </CardContent>
+                <CardActions>
+                  <Button color="primary" href={project.id}>
+                    Builds
+                  </Button>
+                  <Button
+                    color="primary"
+                    href={`${routes.VARIATION_LIST_PAGE}/${project.id}`}
+                  >
+                    Variations
+                  </Button>
+                  <IconButton
+                    onClick={() => {
+                      toggleUpdateDialogOpen();
+                      setProjectEditState(projectDispatch, project);
+                    }}
+                    size="large"
+                  >
+                    <Edit />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => {
+                      toggleDeleteDialogOpen();
+                      setProjectEditState(projectDispatch, project);
+                    }}
+                    size="large"
+                    data-testid="delete"
+                  >
+                    <Delete />
+                  </IconButton>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+    </>
   );
 };
 
